@@ -1,3 +1,13 @@
 core/target/
 macros/target/
 project/target/
+.metadata/
+core/.cache-main
+core/.classpath
+core/.project
+core/.settings/
+macros/.cache-main
+macros/.classpath
+macros/.project
+macros/.settings/
+target/
