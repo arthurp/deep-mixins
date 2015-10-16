@@ -16,19 +16,33 @@ object deepmixinMacro {
     }
     println((annottee, expandees))
     val h = expandees.head
-    h match {
-      case q"object $name extends ..$parents { ..$body }" =>
-        val p = parents.head
-        println((p, p.getClass))
+    val res = h match {
+      case q"object $name extends ..$baseIds { ..$body }" =>
+        val bases = baseIds.map { id =>
+          val typed = c.typecheck(id.duplicate, mode = c.TYPEmode)
+          typed.symbol.asType.toType
+        }
+        val clsMems = bases.map { b => (b, b.members.filter(_.isClass).map(_.asClass)) }
+        val nestedMixes = for (m <- clsMems.head._2) yield {
+          val matchingMems = clsMems.collect {
+            case (b, ms) if ms.exists(_.name == m.name) => (b, ms.find(_.name == m.name).get)
+          }
+          val superClss = matchingMems.map {
+            case (base, mem) =>
+              tq"super[${base.typeSymbol.asClass.name}].${mem.name}"
+          }
+          q"""class ${m.name} extends ..${superClss}"""
+        }
         q"""
-           object $name extends ..$parents {
-              def hello: ${typeOf[String]} = "hello"
+           object $name extends ..$bases {
               ..$body
+              ..$nestedMixes
             }
           """
     }
+    println(res)
 
-    val outputs = expandees
+    val outputs = res :: expandees.tail
     c.Expr[Any](Block(outputs, Literal(Constant(()))))
   }
 }
