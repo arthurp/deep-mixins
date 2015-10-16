@@ -1,5 +1,7 @@
-import scala.reflect.macros.Context
+package deepmixins
+
 import scala.language.experimental.macros
+import scala.reflect.macros.whitebox.Context
 import scala.annotation.StaticAnnotation
 
 object helloMacro {
